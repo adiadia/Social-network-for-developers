@@ -4,6 +4,8 @@ const { check, validationResult } = require('express-validator/check');
 const User = require('../../models/User');
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const config = require('config');
 
 // @route  Post api/users
 // @desc   Test route
@@ -38,7 +40,18 @@ route.post('/', [
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
         await user.save();
-        res.send("user req");
+        const payload = {
+            user: {
+                id: user.id
+            }
+        }
+        jwt.sign(payload, config.get('jwtSceret'), {
+            expiresIn: 360000,
+        },
+            (err, token) => {
+                if (err) throw err;
+                res.json({ token });
+            });
     }
     catch (err) {
         console.log(err.message);
